@@ -20,14 +20,26 @@ public class WorkerActor extends UntypedActor {
 	
 	@Override
 	public void preRestart(Throwable cause, Option<Object> msg) {
-		if (cause instanceof MyException && msg.nonEmpty()) {
-			WorkerMessage task = (WorkerMessage)msg.get();
-			System.out.println(String.format(RestartFormat, task.getWorkerId(), task.getStart(), task.getEnd()));
-			getSelf().tell(task, getSelf());
+		//System.out.println("Thread "+Thread.currentThread().getId()+" get restart message ");
+		if(cause instanceof Exception && msg.nonEmpty()) {
+			WorkerMessage workerMsg = (WorkerMessage)msg.get();
+			//System.out.println("Thread "+Thread.currentThread().getId()+" get restart message and message not null ");
+			getSelf().forward(workerMsg, getContext());
+			//getSelf().tell(workerMsg, getSender());
 		}
 		else {
-			System.out.println(String.format(UnknownExceptionFormat, cause.toString()));
+			return;
 		}
+	}
+	
+	@Override
+	public void preStart() {
+		//System.out.println("In preStart");
+	}
+	
+	@Override
+	public void postStop() {
+		//System.out.println("In postStop");
 	}
 
 	@Override
@@ -35,7 +47,17 @@ public class WorkerActor extends UntypedActor {
 		if (msg instanceof WorkerMessage) {
 			
 			WorkerMessage task = (WorkerMessage) msg;
-			if((RetryCount--) >=1) throw new MyException(String.format(ExceptionFormat, task.getWorkerId()));
+			
+			//System.out.println("Thread "+Thread.currentThread().getId()+" processing worker " + task.getWorkerId());
+			
+			synchronized(this) {
+				if(RetryCount >=1 ) {
+					RetryCount--;
+					System.out.println("Thread "+Thread.currentThread().getId()+" throw exception ");
+					throw new Exception(String.format(ExceptionFormat, task.getWorkerId()));
+				}
+			}
+			
 			int start = task.getStart();
 			int end = task.getEnd();
 			long result = 0L;

@@ -41,7 +41,7 @@ public class MasterActor extends UntypedActor {
 			new Function<Throwable, Directive>() {
 
 				public Directive apply(Throwable exception) throws Exception {
-					if (exception instanceof MyException) {
+					if (exception instanceof Exception) {
 						return SupervisorStrategy.restart();
 					} else {
 						return SupervisorStrategy.escalate();
