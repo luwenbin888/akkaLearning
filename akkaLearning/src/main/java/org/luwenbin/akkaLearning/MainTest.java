@@ -13,7 +13,7 @@ import akka.actor.Props;
 public class MainTest {
 
 	public static void main(String[] args) {
-		JobMessage job = new JobMessage(123123123);
+		JobMessage job = new JobMessage(1000);
 		ActorSystem system = ActorSystem.create("ComputationSystem");
 		ActorRef masterActor = system.actorOf(Props.create(MasterActor.class),
 				"MasterActor");

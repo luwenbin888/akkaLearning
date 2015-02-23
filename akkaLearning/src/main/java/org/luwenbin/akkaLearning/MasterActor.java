@@ -9,8 +9,12 @@ import org.luwenbin.akkaLearning.Message.WorkerMessage;
 
 import scala.concurrent.duration.Duration;
 import akka.actor.ActorRef;
+import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
+import akka.actor.SupervisorStrategy;
+import akka.actor.SupervisorStrategy.Directive;
 import akka.actor.UntypedActor;
+import akka.japi.Function;
 import akka.routing.RoundRobinRouter;
 
 /**
@@ -31,6 +35,25 @@ public class MasterActor extends UntypedActor {
 	long totalResult = 0;
 
 	long startTimestamp;
+
+	private static SupervisorStrategy strategy = new OneForOneStrategy(10,
+			Duration.create(1, TimeUnit.MINUTES),
+			new Function<Throwable, Directive>() {
+
+				public Directive apply(Throwable exception) throws Exception {
+					if (exception instanceof MyException) {
+						return SupervisorStrategy.restart();
+					} else {
+						return SupervisorStrategy.escalate();
+					}
+				}
+
+			});
+
+	@Override
+	public SupervisorStrategy supervisorStrategy() {
+		return strategy;
+	}
 
 	public MasterActor() {
 		router = getContext().actorOf(
